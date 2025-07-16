@@ -103,6 +103,34 @@
             box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3) !important;
         }
 
+        #reload-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%) !important;
+            margin-right: 10px;
+        }
+
+        #reload-btn:hover:not(:disabled) {
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3) !important;
+        }
+
+        #download-another-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+
+        #download-another-btn:hover:not(:disabled) {
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3) !important;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .button-container .download-button {
+            flex: 1;
+            margin-top: 0;
+        }
+
         @keyframes pulse {
             0% {
                 transform: scale(1);
@@ -250,9 +278,9 @@
         <form id="video-info-form">
             <div class="form-group">
                 <div class="url-input-container">
-                    <input type="text" name="url" placeholder="Paste YouTube URL here..." required>
+                    <input type="text" name="url" placeholder="https://www.youtube.com/watch?v=..." required>
                 </div>
-                <div class="url-hint">Video information will load automatically when you paste a valid YouTube URL</div>
+                <div class="url-hint">Only YouTube URLs are supported. Video information will load automatically when you paste a valid YouTube URL.</div>
                 <button style="display:none;" type="submit" style="margin-top: 15px;">Get Video Info</button>
             </div>
         </form>

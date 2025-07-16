@@ -20,15 +20,33 @@ document.querySelector('input[name="url"]').addEventListener('input', function(e
 });
 
 function isValidYouTubeUrl(url) {
-    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
+    // More specific YouTube URL validation
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9_-]{11}/;
     return youtubeRegex.test(url);
+}
+
+function showError(message) {
+    const videoInfoSection = document.getElementById("video-info");
+    videoInfoSection.classList.remove("loading", "show");
+    videoInfoSection.classList.add("show", "error");
+    videoInfoSection.innerHTML = `
+        <div class="error">
+            ${message}
+        </div>
+    `;
 }
 
 function getVideoInfo() {
     const urlInput = document.querySelector('input[name="url"]');
     const url = urlInput.value.trim();
     
-    if (!url || !isValidYouTubeUrl(url)) {
+    if (!url) {
+        showError("Please enter a YouTube URL");
+        return;
+    }
+    
+    if (!isValidYouTubeUrl(url)) {
+        showError("Please enter a valid YouTube URL. Only YouTube videos are supported.");
         return;
     }
 
@@ -261,12 +279,13 @@ function pollProgress(download_id) {
                 if (status === "finished" && downloadReady && filename) {
                     clearInterval(interval);
                     document.getElementById("progress-bar").style.width = "100%";
-                    document.getElementById("progress-bar").innerText = "Ready";
+                    document.getElementById("progress-bar").innerText = "Starting Download...";
                     document.getElementById("progress-bar").style.backgroundColor = "";
                     document.getElementById("progress-bar").className = "";
+                    document.getElementById("extra-info").innerText = "Download will start automatically...";
                     
-                    // Add download button
-                    addDownloadButton(download_id, filename);
+                    // Automatically start the download
+                    downloadFile(download_id, filename);
                 }
             })
             .catch(error => {
@@ -276,6 +295,46 @@ function pollProgress(download_id) {
                 document.getElementById("extra-info").innerText = "Lost connection to server. Trying to reconnect...";
             });
     }, 1000);
+}
+
+function addReloadButtons() {
+    // Remove any existing buttons
+    const existingButtons = document.querySelectorAll("#reload-btn, #download-another-btn, .button-container");
+    existingButtons.forEach(btn => btn.remove());
+    
+    // Create button container
+    const buttonContainer = document.createElement("div");
+    buttonContainer.className = "button-container";
+    
+    // Create reload button
+    const reloadBtn = document.createElement("button");
+    reloadBtn.id = "reload-btn";
+    reloadBtn.textContent = "🔄 Reload Page";
+    reloadBtn.className = "download-button";
+    reloadBtn.onclick = () => window.location.reload();
+    
+    // Create download another button
+    const downloadAnotherBtn = document.createElement("button");
+    downloadAnotherBtn.id = "download-another-btn";
+    downloadAnotherBtn.textContent = "📥 Download Another Video";
+    downloadAnotherBtn.className = "download-button";
+    downloadAnotherBtn.onclick = () => {
+        // Clear the form and reset the page state
+        document.querySelector('input[name="url"]').value = "";
+        document.getElementById("video-info").classList.remove("show", "loading", "error");
+        document.getElementById("progress-section").classList.remove("show");
+        
+        // Focus on the URL input
+        document.querySelector('input[name="url"]').focus();
+    };
+    
+    // Add buttons to container
+    buttonContainer.appendChild(reloadBtn);
+    buttonContainer.appendChild(downloadAnotherBtn);
+    
+    // Add container to the progress section
+    const progressSection = document.getElementById("progress-section");
+    progressSection.appendChild(buttonContainer);
 }
 
 function addDownloadButton(download_id, filename) {
@@ -300,12 +359,10 @@ function addDownloadButton(download_id, filename) {
 function downloadFile(download_id, filename) {
     console.log('Downloading file:', download_id, filename); // Debug log
     
-    const downloadBtn = document.getElementById("download-btn");
-    const originalText = downloadBtn.textContent;
-    
-    // Show loading state
-    downloadBtn.disabled = true;
-    downloadBtn.textContent = "Starting download...";
+    // Update progress bar to show download is starting
+    const progressBar = document.getElementById("progress-bar");
+    progressBar.innerText = "Download Started";
+    document.getElementById("extra-info").innerText = `Downloading: ${filename}`;
     
     // Use the streaming download endpoint for direct browser download
     const link = document.createElement('a');
@@ -318,9 +375,13 @@ function downloadFile(download_id, filename) {
     link.click();
     document.body.removeChild(link);
     
-    // Reset button after a short delay
+    // Show completion message after a short delay
     setTimeout(() => {
-        downloadBtn.disabled = false;
-        downloadBtn.textContent = originalText;
-    }, 2000);
+        progressBar.innerText = "Download Complete";
+        progressBar.style.backgroundColor = "#4CAF50";
+        document.getElementById("extra-info").innerText = "File downloaded successfully!";
+        
+        // Add reload and download another buttons
+        addReloadButtons();
+    }, 1000);
 }
