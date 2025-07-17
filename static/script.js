@@ -1,3 +1,12 @@
+// Restore URL from sessionStorage if available
+document.addEventListener('DOMContentLoaded', function() {
+    const savedUrl = sessionStorage.getItem('retryUrl');
+    if (savedUrl) {
+        document.querySelector('input[name="url"]').value = savedUrl;
+        sessionStorage.removeItem('retryUrl'); // Clear it after restoring
+    }
+});
+
 document.getElementById("video-info-form").addEventListener("submit", function(e) {
     e.preventDefault();
     getVideoInfo();
@@ -20,8 +29,8 @@ document.querySelector('input[name="url"]').addEventListener('input', function(e
 });
 
 function isValidYouTubeUrl(url) {
-    // More specific YouTube URL validation
-    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9_-]{11}/;
+    // YouTube URL validation supporting regular videos and shorts
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|shorts\/)|youtu\.be\/)[a-zA-Z0-9_-]{11}/;
     return youtubeRegex.test(url);
 }
 
@@ -32,6 +41,32 @@ function showError(message) {
     videoInfoSection.innerHTML = `
         <div class="error">
             ${message}
+        </div>
+    `;
+}
+
+function showVideoInfoError(message) {
+    const videoInfoSection = document.getElementById("video-info");
+    const currentUrl = document.querySelector('input[name="url"]').value.trim();
+    
+    videoInfoSection.classList.remove("loading");
+    videoInfoSection.classList.add("show", "error");
+    videoInfoSection.innerHTML = `
+        <div class="error">
+            <div style="margin-bottom: 15px;">
+                <strong>⚠️ ${message}</strong>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <button onclick="retryVideoInfo()" class="download-button" style="margin-right: 10px;">
+                    🔄 Try Again
+                </button>
+                <button onclick="reloadWithUrl()" class="download-button">
+                    🔄 Reload & Keep URL
+                </button>
+            </div>
+            <div style="font-size: 0.9em; color: #666;">
+                💡 Tip: If the problem persists, try reloading the page or check your internet connection.
+            </div>
         </div>
     `;
 }
@@ -90,13 +125,7 @@ function getVideoInfo() {
     })
     .catch(error => {
         console.error('Error:', error);
-        videoInfoSection.classList.remove("loading");
-        videoInfoSection.classList.add("error");
-        videoInfoSection.innerHTML = `
-            <div class="error">
-                Failed to get video information. Please try again.
-            </div>
-        `;
+        showVideoInfoError("Failed to get video information. Please try again.");
     })
     .finally(() => {
         // Re-enable button
@@ -106,7 +135,11 @@ function getVideoInfo() {
 }
 
 function pollVideoInfo(info_id) {
+    let attempts = 0;
+    const maxAttempts = 30; // 30 seconds timeout
     const interval = setInterval(() => {
+        attempts++;
+        
         fetch(`/video-info/${info_id}`)
             .then(res => {
                 if (!res.ok) {
@@ -116,15 +149,8 @@ function pollVideoInfo(info_id) {
             })
             .then(data => {
                 if (data.error) {
-                    const videoInfoSection = document.getElementById("video-info");
-                    videoInfoSection.classList.remove("loading");
-                    videoInfoSection.classList.add("error");
-                    videoInfoSection.innerHTML = `
-                        <div class="error">
-                            Error: ${data.error}
-                        </div>
-                    `;
                     clearInterval(interval);
+                    showVideoInfoError(`Error getting video info: ${data.error}`);
                     return;
                 }
 
@@ -135,14 +161,20 @@ function pollVideoInfo(info_id) {
             })
             .catch(error => {
                 console.error('Error polling video info:', error);
-                const videoInfoSection = document.getElementById("video-info");
-                videoInfoSection.classList.remove("loading");
-                videoInfoSection.classList.add("error");
-                videoInfoSection.innerHTML = `
-                    <div class="error">
-                        Lost connection to server. Trying to reconnect...
-                    </div>
-                `;
+                
+                if (attempts >= maxAttempts) {
+                    clearInterval(interval);
+                    showVideoInfoError("Timeout: Video info request took too long. Please try again.");
+                } else {
+                    const videoInfoSection = document.getElementById("video-info");
+                    videoInfoSection.classList.remove("loading");
+                    videoInfoSection.classList.add("error");
+                    videoInfoSection.innerHTML = `
+                        <div class="error">
+                            Lost connection to server. Trying to reconnect... (${attempts}/${maxAttempts})
+                        </div>
+                    `;
+                }
             });
     }, 1000);
 }
@@ -221,14 +253,16 @@ function startDownload(info_id) {
     })
     .catch(error => {
         console.error('Error starting download:', error);
-        progressBar.classList.add("error");
-        progressBar.innerText = "Error";
-        document.getElementById("extra-info").innerText = "Failed to start download. Please try again.";
+        showDownloadError("Failed to start download. Please try again.");
     });
 }
 
 function pollProgress(download_id) {
+    let attempts = 0;
+    const maxAttempts = 300; // 5 minutes timeout for downloads
     const interval = setInterval(() => {
+        attempts++;
+        
         fetch(`/progress/${download_id}`)
             .then(res => {
                 if (!res.ok) {
@@ -240,10 +274,8 @@ function pollProgress(download_id) {
                 console.log('Progress data:', data); // Debug log
                 
                 if (data.error) {
-                    document.getElementById("progress-bar").classList.add("error");
-                    document.getElementById("progress-bar").innerText = "Error";
-                    document.getElementById("extra-info").innerText = `Failed: ${data.error}`;
                     clearInterval(interval);
+                    showDownloadError(`Download failed: ${data.error}`);
                     return;
                 }
 
@@ -290,11 +322,78 @@ function pollProgress(download_id) {
             })
             .catch(error => {
                 console.error('Error polling progress:', error);
-                document.getElementById("progress-bar").classList.add("warning");
-                document.getElementById("progress-bar").innerText = "Connection Error";
-                document.getElementById("extra-info").innerText = "Lost connection to server. Trying to reconnect...";
+                
+                if (attempts >= maxAttempts) {
+                    clearInterval(interval);
+                    showDownloadError("Timeout: Download took too long. Please try again.");
+                } else {
+                    document.getElementById("progress-bar").classList.add("warning");
+                    document.getElementById("progress-bar").innerText = "Connection Error";
+                    document.getElementById("extra-info").innerText = `Lost connection to server. Trying to reconnect... (${attempts}/${maxAttempts})`;
+                }
             });
     }, 1000);
+}
+
+function retryVideoInfo() {
+    // Simply call getVideoInfo again with the current URL
+    getVideoInfo();
+}
+
+function reloadWithUrl() {
+    const currentUrl = document.querySelector('input[name="url"]').value.trim();
+    if (currentUrl) {
+        // Store the URL in sessionStorage before reloading
+        sessionStorage.setItem('retryUrl', currentUrl);
+    }
+    window.location.reload();
+}
+
+function showDownloadError(message) {
+    const progressSection = document.getElementById("progress-section");
+    const progressBar = document.getElementById("progress-bar");
+    const extraInfo = document.getElementById("extra-info");
+    
+    progressBar.classList.add("error");
+    progressBar.innerText = "Download Failed";
+    extraInfo.innerText = message;
+    
+    // Add retry buttons
+    const buttonContainer = document.createElement("div");
+    buttonContainer.className = "button-container";
+    buttonContainer.style.marginTop = "15px";
+    
+    const retryBtn = document.createElement("button");
+    retryBtn.textContent = "🔄 Try Again";
+    retryBtn.className = "download-button";
+    retryBtn.onclick = () => {
+        // Get the current video info and restart download
+        const videoInfoSection = document.getElementById("video-info");
+        if (videoInfoSection.classList.contains("show")) {
+            // If video info is still available, restart download
+            const downloadBtn = videoInfoSection.querySelector('.download-button');
+            if (downloadBtn) {
+                downloadBtn.click();
+            }
+        } else {
+            // Otherwise, try to get video info again
+            getVideoInfo();
+        }
+    };
+    
+    const reloadBtn = document.createElement("button");
+    reloadBtn.textContent = "🔄 Reload & Keep URL";
+    reloadBtn.className = "download-button";
+    reloadBtn.onclick = reloadWithUrl;
+    
+    buttonContainer.appendChild(retryBtn);
+    buttonContainer.appendChild(reloadBtn);
+    
+    // Remove any existing error buttons
+    const existingButtons = progressSection.querySelectorAll(".button-container");
+    existingButtons.forEach(btn => btn.remove());
+    
+    progressSection.appendChild(buttonContainer);
 }
 
 function addReloadButtons() {
