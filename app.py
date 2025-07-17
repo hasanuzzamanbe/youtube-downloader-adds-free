@@ -38,20 +38,28 @@ def sanitize_filename(filename):
     return filename
 
 def get_video_info(url, info_id):
-    """Get video information without downloading"""
+    """Get video information without downloading - Optimized for speed"""
     try:
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
+            'nocheckcertificate': True, # SSL verification for speed
+            'extract_flat': False,  # We need full info but can optimize
+            'no_color': True,
+            'prefer_ffmpeg': False,  # Don't use ffmpeg for info extraction
+            'skip_download': True, # Ensure no download happens
+            'noplaylist': True,  # Skip playlist processing
+            'extractor_args': {'youtube': {'skip': ['dash', 'live']}} # Skip DASH and live streams for faster processing
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # Extract video info
+            # Extract video info with minimal processing
             info = ydl.extract_info(url, download=False)
             if not info:
                 video_info_data[info_id] = {'error': 'Failed to extract video info', 'status': 'error'}
                 return
                 
+            # Extract only essential info for speed
             title = info.get('title', 'Unknown Title')
             duration = info.get('duration', 0)
             uploader = info.get('uploader', 'Unknown')
@@ -60,7 +68,7 @@ def get_video_info(url, info_id):
             description = info.get('description', '')[:200] + '...' if info.get('description', '') else 'No description available'
             ext = info.get('ext', 'mp4')
             
-            # Format duration
+            # Fast duration formatting
             if duration:
                 minutes = duration // 60
                 seconds = duration % 60
@@ -68,52 +76,51 @@ def get_video_info(url, info_id):
             else:
                 duration_str = "Unknown"
             
-            # Format view count
+            # Fast view count formatting
             if view_count:
                 if view_count >= 1000000:
-                    view_str = f"{view_count/1000000:.1f}M views"
+                    view_str = f"{view_count//1000000}M views"
                 elif view_count >= 1000:
-                    view_str = f"{view_count/1000:.1f}K views"
+                    view_str = f"{view_count//1000}K views"
                 else:
                     view_str = f"{view_count} views"
             else:
                 view_str = "Unknown views"
             
-            # Sanitize the filename
+            # Fast filename sanitization
             original_filename = f"{title}.{ext}"
             safe_filename = sanitize_filename(original_filename)
             
-            # Get the best format URL - look for video formats specifically
-            formats = info.get('formats', []) if info else []
+            # Optimized format selection - get first good format quickly
+            formats = info.get('formats', [])
             best_video_format = None
             
-            # First, try to find the best video format
+            # Quick format selection - prioritize mp4 with both video and audio
             for f in formats:
-                if f and f.get('vcodec') != 'none' and f.get('acodec') != 'none':  # Has both video and audio
-                    if f.get('height', 0) > 0:  # Has video resolution
-                        best_video_format = f
-                        break
+                if (f and f.get('vcodec') != 'none' and
+                    f.get('acodec') != 'none' and
+                    f.get('ext') == 'mp4' and
+                    f.get('height', 0) > 0):
+                    best_video_format = f
+                    break
             
-            # If no video+audio format found, look for best video only
+            # Fallback to any format with video
             if not best_video_format:
                 for f in formats:
                     if f and f.get('vcodec') != 'none' and f.get('height', 0) > 0:
                         best_video_format = f
                         break
             
-            # If still no video format, take the last format
+            # Last resort - any format
             if not best_video_format and formats:
-                best_video_format = formats[-1]
+                best_video_format = formats[0]  # Take first instead of last
             
             if best_video_format:
                 direct_url = best_video_format.get('url', '')
                 format_info = best_video_format.get('format_note', '')
                 height = best_video_format.get('height', 0)
                 
-                # Debug: Print format information
-                print(f"Selected format: {format_info}, Height: {height}, URL: {direct_url[:100]}...")
-                
-                # Update progress data with video info
+                # Store video info immediately
                 video_info_data[info_id] = {
                     'title': title,
                     'duration': duration_str,
@@ -124,7 +131,7 @@ def get_video_info(url, info_id):
                     'filename': safe_filename,
                     'original_filename': original_filename,
                     'url': direct_url,
-                    'original_youtube_url': url,  # Store original URL as fallback
+                    'original_youtube_url': url,
                     'status': 'ready',
                     'ext': ext,
                     'format_info': format_info,
@@ -220,6 +227,14 @@ def download_video(download_id, direct_url, filename, original_filename, origina
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+    return render_template("index.html")
+
+@app.route("/watch")
+def watch_route():
+    return render_template("index.html")
+
+@app.route("/shorts/<path:video_id>")
+def shorts_route(video_id):
     return render_template("index.html")
 
 @app.route("/get-video-info", methods=["POST"])

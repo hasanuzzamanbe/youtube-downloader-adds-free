@@ -7,6 +7,34 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// --- Deep link: Parse /watch or /shorts from browser URL and fill input ---
+document.addEventListener('DOMContentLoaded', function() {
+    // Existing sessionStorage restore logic
+    const savedUrl = sessionStorage.getItem('retryUrl');
+    if (savedUrl) {
+        document.querySelector('input[name="url"]').value = savedUrl;
+        sessionStorage.removeItem('retryUrl');
+    }
+
+    // Deep link logic
+    const path = window.location.pathname;
+    const search = window.location.search;
+    let youtubeUrl = null;
+    if (path.startsWith('/watch')) {
+        youtubeUrl = `https://www.youtube.com${path}${search}`;
+    } else if (path.startsWith('/shorts')) {
+        youtubeUrl = `https://www.youtube.com${path}${search}`;
+    }
+    if (youtubeUrl) {
+        const input = document.querySelector('input[name="url"]');
+        input.value = youtubeUrl;
+        // Automatically fetch video info when URL is parsed and filled
+        setTimeout(() => {
+            getVideoInfo();
+        }, 300); // Small delay to ensure input is properly set
+    }
+});
+
 document.getElementById("video-info-form").addEventListener("submit", function(e) {
     e.preventDefault();
     getVideoInfo();
