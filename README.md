@@ -1,17 +1,24 @@
 # YouTube Video Downloader
 
-A modern, web-based YouTube video downloader with real-time progress tracking.
+A modern, web-based YouTube video downloader with real-time progress tracking, built with Vue.js 3 and Flask.
 
 ## Features
 
 - 🎥 Download YouTube videos in best quality
 - 📊 Real-time progress bar with download speed and ETA
-- 🎨 Modern, responsive UI
+- 🎨 Modern, responsive UI built with Vue.js
 - ⚡ Fast and efficient downloads
 - 🔄 Automatic progress tracking
 - 🛡️ Error handling and user feedback
+- 🔧 Modern development setup with Vite
 
 ## Installation
+
+### Prerequisites
+- Python 3.7+
+- Node.js 16+
+
+### Setup
 
 1. **Clone or download this repository**
 
@@ -20,14 +27,43 @@ A modern, web-based YouTube video downloader with real-time progress tracking.
    pip install -r requirements.txt
    ```
 
-3. **Run the application:**
+3. **Install Node.js dependencies:**
+   ```bash
+   npm install
+   ```
+
+4. **Build the frontend:**
+   ```bash
+   npm run build
+   ```
+
+5. **Run the application:**
    ```bash
    python app.py
    ```
 
-4. **Open your browser and go to:**
+6. **Open your browser and go to:**
    ```
    http://localhost:5300
+   ```
+
+## Development
+
+For development with hot reload:
+
+1. **Start the Flask backend:**
+   ```bash
+   python app.py
+   ```
+
+2. **Start the Vue.js development server (in another terminal):**
+   ```bash
+   npm run dev
+   ```
+
+3. **Open your browser and go to:**
+   ```
+   http://localhost:3000
    ```
 
 ## Usage
@@ -37,11 +73,11 @@ A modern, web-based YouTube video downloader with real-time progress tracking.
 3. Watch the real-time progress bar
 4. The video will be downloaded to your browser's default download location
 
-## Requirements
+## Technology Stack
 
-- Python 3.7+
-- Flask
-- yt-dlp
+- **Backend**: Python 3.7+, Flask, yt-dlp
+- **Frontend**: Vue.js 3 (Options API), Vite
+- **Build Tool**: Vite for fast development and optimized builds
 
 ## Notes
 

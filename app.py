@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_file, Response, stream_template
+from flask import Flask, render_template, request, jsonify, send_file, Response, stream_template, send_from_directory
 import yt_dlp
 import os
 import threading
@@ -10,7 +10,10 @@ import requests
 import re
 from urllib.parse import urlparse, quote
 
-app = Flask(__name__)
+# Configure Flask to serve Vue.js build files
+app = Flask(__name__,
+            static_folder='dist/assets',
+            template_folder='dist')
 DOWNLOAD_DIR = "downloads"
 progress_data = {}
 video_info_data = {}
@@ -227,15 +230,20 @@ def download_video(download_id, direct_url, filename, original_filename, origina
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    return render_template("index.html")
+    return send_from_directory('dist', 'index.html')
 
 @app.route("/watch")
 def watch_route():
-    return render_template("index.html")
+    return send_from_directory('dist', 'index.html')
 
 @app.route("/shorts/<path:video_id>")
 def shorts_route(video_id):
-    return render_template("index.html")
+    return send_from_directory('dist', 'index.html')
+
+# Serve Vue.js static assets
+@app.route('/assets/<path:filename>')
+def serve_assets(filename):
+    return send_from_directory('dist/assets', filename)
 
 @app.route("/get-video-info", methods=["POST"])
 def get_video_info_route():
