@@ -20,7 +20,7 @@
       <div class="container">
         <!-- Input Section -->
         <div class="input-section">
-          <h2 class="section-title">Enter YouTube URL</h2>
+<!--          <h2 class="section-title">Enter YouTube URL</h2>-->
           <form @submit.prevent="getVideoInfo" class="url-form">
             <div class="input-wrapper">
               <div class="input-icon">
@@ -138,53 +138,82 @@
                     </svg>
                     <span>{{ videoInfo.height }}p</span>
                   </div>
+                  <div>
+                    more
+                    <svg @click="showDescription = !showDescription" style="float:right; cursor: pointer;"
+                         viewBox="0 0 24 24"
+                         class="collapse-icon"
+                         :class="{ expanded: showDescription }"
+                    >
+                      <path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                    </svg>
+                  </div>
                 </div>
 
-                <p class="video-description">{{ videoInfo.description || 'No description available' }}</p>
+                <p class="video-description">
+                  <span v-if="showDescription">{{ videoInfo.description || 'No description available' }}</span>
+                </p>
 
-                <!-- Format Selection -->
-                <div class="format-selection">
-                  <div class="format-tabs">
-                    <button
+                <div class="format-tabs">
+                  <button
                       @click="selectedFormat = 'video'"
                       :class="['format-tab', { active: selectedFormat === 'video' }]"
-                    >
-                      <svg viewBox="0 0 24 24">
-                        <path fill="currentColor" d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
-                      </svg>
-                      Video
-                    </button>
-                    <button
+                  >
+                    <svg viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+                    </svg>
+                    Video
+                  </button>
+                  <button
                       @click="selectedFormat = 'audio'"
                       :class="['format-tab', { active: selectedFormat === 'audio' }]"
-                    >
+                  >
+                    <svg viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                    </svg>
+                    Audio (MP3)
+                  </button>
+                </div>
+                <!-- Format Selection -->
+                <div class="format-selection">
+
+                    <button @click="startDownload" class="btn btn-download">
                       <svg viewBox="0 0 24 24">
-                        <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                        <path fill="currentColor" d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
                       </svg>
-                      Audio (MP3)
+                      Download {{ selectedFormat === 'video' ? 'Video - ' + getSelectedQualityLabel() : getSelectedAudioQualityLabel() }}
                     </button>
-                  </div>
+                    <div>
+                    </div>
 
                   <!-- Video Quality Options -->
                   <div v-if="selectedFormat === 'video'" class="quality-options">
                     <!-- Collapsible Video Quality Options -->
                     <div class="quality-collapse-header" @click="showVideoOptions = !showVideoOptions">
-                      <h5 class="quality-title">Video Quality: {{ getSelectedQualityLabel() }}</h5>
-                      <svg
-                        viewBox="0 0 24 24"
-                        class="collapse-icon"
-                        :class="{ expanded: showVideoOptions }"
-                      >
-                        <path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
-                      </svg>
+                      <h5 class="quality-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+                             stroke="rgb(0, 212, 255)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="3" />
+                          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33
+                             1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51
+                             1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0
+                             .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0
+                             1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65
+                             0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65
+                             0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1
+                             2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0
+                             1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                        </svg>
+
+                      </h5>
                     </div>
 
                     <div v-show="showVideoOptions" class="quality-grid">
                       <button
-                        v-for="quality in availableQualities"
-                        :key="quality.value"
-                        @click="selectedQuality = quality.value"
-                        :class="['quality-btn', { active: selectedQuality === quality.value }]"
+                          v-for="quality in availableQualities"
+                          :key="quality.value"
+                          @click="selectedQuality = quality.value"
+                          :class="['quality-btn', { active: selectedQuality === quality.value }]"
                       >
                         <div class="quality-info">
                           <span class="quality-label">{{ quality.label }}</span>
@@ -212,22 +241,28 @@
                     <div v-else>
                       <!-- Collapsible Audio Quality Options -->
                       <div class="quality-collapse-header" @click="showAudioOptions = !showAudioOptions">
-                        <h5 class="quality-title">Audio Quality: {{ getSelectedAudioQualityLabel() }}</h5>
-                        <svg
-                          viewBox="0 0 24 24"
-                          class="collapse-icon"
-                          :class="{ expanded: showAudioOptions }"
-                        >
-                          <path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+                             stroke="rgb(0, 212, 255)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="3" />
+                          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33
+                             1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51
+                             1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0
+                             .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0
+                             1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65
+                             0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65
+                             0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1
+                             2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0
+                             1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
                         </svg>
+
                       </div>
 
                       <div v-show="showAudioOptions" class="quality-grid">
                         <button
-                          v-for="quality in audioQualities"
-                          :key="quality.value"
-                          @click="selectedAudioQuality = quality.value"
-                          :class="['quality-btn', { active: selectedAudioQuality === quality.value }]"
+                            v-for="quality in audioQualities"
+                            :key="quality.value"
+                            @click="selectedAudioQuality = quality.value"
+                            :class="['quality-btn', { active: selectedAudioQuality === quality.value }]"
                         >
                           <div class="quality-info">
                             <span class="quality-label">{{ quality.label }}</span>
@@ -239,22 +274,18 @@
                         </button>
                       </div>
 
-<!--                      <div class="audio-info">-->
-<!--                        <svg viewBox="0 0 24 24" class="info-icon">-->
-<!--                          <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>-->
-<!--                        </svg>-->
-<!--                        <p>Audio files are processed on the server and automatically deleted after download to keep storage clean.</p>-->
-<!--                      </div>-->
+                      <!--                      <div class="audio-info">-->
+                      <!--                        <svg viewBox="0 0 24 24" class="info-icon">-->
+                      <!--                          <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>-->
+                      <!--                        </svg>-->
+                      <!--                        <p>Audio files are processed on the server and automatically deleted after download to keep storage clean.</p>-->
+                      <!--                      </div>-->
                     </div>
                   </div>
+
                 </div>
 
-                <button @click="startDownload" class="btn btn-download">
-                  <svg viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-                  </svg>
-                  Download Best Quality
-                </button>
+
               </div>
             </div>
           </div>
@@ -346,7 +377,7 @@
           <a href="#" class="footer-link">Support</a>
         </div>
         <div class="copyright">
-          <p>&copy; 2024 <strong>getstube.com</strong> - All rights reserved</p>
+          <p>&copy; 2025 <strong>www.getstube.com</strong> - All rights reserved</p>
           <p class="disclaimer">For personal use only. Please respect YouTube's terms of service.</p>
         </div>
       </div>
@@ -370,6 +401,7 @@ export default {
       showProgress: false,
       progressData: {},
       extraInfo: '',
+      showDescription: false,
       downloadError: false,
       downloadComplete: false,
       currentDownloadId: null,
@@ -382,7 +414,7 @@ export default {
         { value: '720', label: '720p HD', description: 'HD Ready (1280x720)' },
         { value: '480', label: '480p', description: 'Standard Definition' },
         { value: '360', label: '360p', description: 'Low Quality (smaller file)' },
-        { value: '240', label: '240p', description: 'Very Low Quality' }
+        // { value: '240', label: '240p', description: 'Very Low Quality' }
       ],
       audioQualities: [
         { value: 'high', label: '320 kbps', description: 'High Quality MP3' },
