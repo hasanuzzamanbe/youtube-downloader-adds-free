@@ -1,107 +1,356 @@
 <template>
-  <div class="container">
-    <h1>YouTube Downloader</h1>
-    
-    <form @submit.prevent="getVideoInfo">
-      <div class="form-group">
-        <div class="url-input-container">
-          <input 
-            type="text" 
-            v-model="url" 
-            placeholder="https://www.youtube.com/..." 
-            required
-            @input="onUrlInput"
-          >
+  <div class="app">
+    <!-- Header Section -->
+    <header class="header">
+      <div class="header-content">
+        <div class="logo-section">
+          <div class="logo">
+            <svg viewBox="0 0 24 24" class="logo-icon">
+              <path fill="currentColor" d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+            </svg>
+            <span class="logo-text">GetsTube</span>
+          </div>
+          <p class="tagline">Download YouTube videos instantly</p>
         </div>
-        <div class="url-hint">
-          Only YouTube URLs are supported (videos and shorts). 
-          Video information will load automatically when you paste a valid YouTube URL.
-        </div>
-        <button style="display:none;" type="submit">Get Video Info</button>
       </div>
-    </form>
+    </header>
 
-    <!-- Video Info Section -->
-    <div 
-      class="video-info" 
-      v-show="showVideoInfo" 
-      :class="{ 
-        'show': showVideoInfo, 
-        'loading': isLoadingVideoInfo, 
-        'error': videoInfoError 
-      }"
-    >
-      <div v-if="isLoadingVideoInfo" class="loading">
-        <div class="loading-spinner"></div>
-        Getting video information...
-      </div>
-      
-      <div v-else-if="videoInfoError" class="error">
-        <div style="margin-bottom: 15px;">
-          <strong>⚠️ {{ videoInfoErrorMessage }}</strong>
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="container">
+        <!-- Input Section -->
+        <div class="input-section">
+          <h2 class="section-title">Enter YouTube URL</h2>
+          <form @submit.prevent="getVideoInfo" class="url-form">
+            <div class="input-wrapper">
+              <div class="input-icon">
+                <svg viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
+                </svg>
+              </div>
+              <input
+                type="text"
+                v-model="url"
+                placeholder="Paste YouTube URL here (e.g., https://www.youtube.com/watch?v=...)"
+                required
+                @input="onUrlInput"
+                class="url-input"
+              >
+              <button
+                type="button"
+                @click="clearUrl"
+                v-if="url"
+                class="clear-btn"
+                title="Clear URL"
+              >
+                <svg viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            </div>
+            <div class="url-hint">
+              <svg viewBox="0 0 24 24" class="hint-icon">
+                <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+              </svg>
+              Supports YouTube videos and shorts. Videos stream directly, audio files are auto-cleaned after download.
+            </div>
+          </form>
         </div>
-        <div style="margin-bottom: 15px;">
-          <button @click="retryVideoInfo" class="download-button" style="margin-right: 10px;">
-            🔄 Try Again
-          </button>
-          <button @click="reloadWithUrl" class="download-button">
-            🔄 Reload & Keep URL
-          </button>
-        </div>
-        <div style="font-size: 0.9em; color: #666;">
-          💡 Tip: If the problem persists, try reloading the page or check your internet connection.
-        </div>
-      </div>
-      
-      <div v-else-if="videoInfo">
-        <img 
-          v-if="videoInfo.thumbnail" 
-          :src="videoInfo.thumbnail" 
-          alt="Video thumbnail" 
-          class="video-thumbnail"
-        >
-        <div class="video-title">{{ videoInfo.title || 'Unknown Title' }}</div>
-        <div class="video-meta">
-          <strong>Duration:</strong> {{ videoInfo.duration || 'Unknown' }} | 
-          <strong>Uploader:</strong> {{ videoInfo.uploader || 'Unknown' }} | 
-          <strong>Views:</strong> {{ videoInfo.view_count || 'Unknown' }}
-          <span v-if="videoInfo.height"> | <strong>Quality:</strong> {{ videoInfo.height }}p</span>
-          <span v-if="videoInfo.format_info"> | <strong>Format:</strong> {{ videoInfo.format_info }}</span>
-        </div>
-        <div class="video-description">{{ videoInfo.description || 'No description available' }}</div>
-        <button @click="startDownload" class="download-button">
-          📥 Download Video
-        </button>
-      </div>
-    </div>
 
-    <!-- Progress Section -->
-    <div 
-      class="progress-section" 
-      v-show="showProgress" 
-      :class="{ 'show': showProgress }"
-    >
-      <div id="progress-container">
-        <div 
-          id="progress-bar" 
-          :style="{ width: progressData.progress || '0%' }" 
-          :class="progressBarClass"
+        <!-- Video Info Section -->
+        <div
+          class="video-info-section"
+          v-show="showVideoInfo"
         >
-          {{ progressData.progress_text || '0%' }}
+          <div class="card" :class="{ 'loading': isLoadingVideoInfo, 'error': videoInfoError }">
+            <div v-if="isLoadingVideoInfo" class="loading-state">
+              <div class="loading-spinner"></div>
+              <h3>Getting video information...</h3>
+              <p>Please wait while we fetch the video details</p>
+            </div>
+
+            <div v-else-if="videoInfoError" class="error-state">
+              <div class="error-icon">
+                <svg viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+              </div>
+              <h3>{{ videoInfoErrorMessage }}</h3>
+              <div class="error-actions">
+                <button @click="retryVideoInfo" class="btn btn-primary">
+                  <svg viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                  </svg>
+                  Try Again
+                </button>
+                <button @click="reloadWithUrl" class="btn btn-secondary">
+                  <svg viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                  </svg>
+                  Reload & Keep URL
+                </button>
+              </div>
+              <p class="error-tip">
+                💡 If the problem persists, try reloading the page or check your internet connection.
+              </p>
+            </div>
+
+            <div v-else-if="videoInfo" class="video-info">
+              <div class="video-thumbnail-container">
+                <img
+                  v-if="videoInfo.thumbnail"
+                  :src="videoInfo.thumbnail"
+                  alt="Video thumbnail"
+                  class="video-thumbnail"
+                >
+                <div class="video-overlay">
+                  <svg viewBox="0 0 24 24" class="play-icon">
+                    <path fill="currentColor" d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+              </div>
+
+              <div class="video-details">
+                <h3 class="video-title">{{ videoInfo.title || 'Unknown Title' }}</h3>
+
+                <div class="video-meta">
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    <span>{{ videoInfo.duration || 'Unknown' }}</span>
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                    <span>{{ videoInfo.uploader || 'Unknown' }}</span>
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                    </svg>
+                    <span>{{ videoInfo.view_count || 'Unknown' }}</span>
+                  </div>
+                  <div v-if="videoInfo.height" class="meta-item">
+                    <svg viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                    </svg>
+                    <span>{{ videoInfo.height }}p</span>
+                  </div>
+                </div>
+
+                <p class="video-description">{{ videoInfo.description || 'No description available' }}</p>
+
+                <!-- Format Selection -->
+                <div class="format-selection">
+                  <div class="format-tabs">
+                    <button
+                      @click="selectedFormat = 'video'"
+                      :class="['format-tab', { active: selectedFormat === 'video' }]"
+                    >
+                      <svg viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+                      </svg>
+                      Video
+                    </button>
+                    <button
+                      @click="selectedFormat = 'audio'"
+                      :class="['format-tab', { active: selectedFormat === 'audio' }]"
+                    >
+                      <svg viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                      </svg>
+                      Audio (MP3)
+                    </button>
+                  </div>
+
+                  <!-- Video Quality Options -->
+                  <div v-if="selectedFormat === 'video'" class="quality-options">
+                    <!-- Collapsible Video Quality Options -->
+                    <div class="quality-collapse-header" @click="showVideoOptions = !showVideoOptions">
+                      <h5 class="quality-title">Video Quality: {{ getSelectedQualityLabel() }}</h5>
+                      <svg
+                        viewBox="0 0 24 24"
+                        class="collapse-icon"
+                        :class="{ expanded: showVideoOptions }"
+                      >
+                        <path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                      </svg>
+                    </div>
+
+                    <div v-show="showVideoOptions" class="quality-grid">
+                      <button
+                        v-for="quality in availableQualities"
+                        :key="quality.value"
+                        @click="selectedQuality = quality.value"
+                        :class="['quality-btn', { active: selectedQuality === quality.value }]"
+                      >
+                        <div class="quality-info">
+                          <span class="quality-label">{{ quality.label }}</span>
+                          <span class="quality-desc">{{ quality.description }}</span>
+                        </div>
+                        <svg v-if="selectedQuality === quality.value" viewBox="0 0 24 24" class="check-icon">
+                          <path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Audio Quality Options -->
+                  <div v-if="selectedFormat === 'audio'" class="quality-options">
+                    <div v-if="!ffmpegAvailable" class="audio-notice">
+                      <svg viewBox="0 0 24 24" class="notice-icon">
+                        <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                      </svg>
+                      <div>
+                        <h5>FFmpeg Required</h5>
+                        <p>Audio extraction requires FFmpeg. Please install FFmpeg to enable audio downloads. <a href="#" @click.prevent="showFFmpegGuide = true">Installation Guide</a></p>
+                      </div>
+                    </div>
+
+                    <div v-else>
+                      <!-- Collapsible Audio Quality Options -->
+                      <div class="quality-collapse-header" @click="showAudioOptions = !showAudioOptions">
+                        <h5 class="quality-title">Audio Quality: {{ getSelectedAudioQualityLabel() }}</h5>
+                        <svg
+                          viewBox="0 0 24 24"
+                          class="collapse-icon"
+                          :class="{ expanded: showAudioOptions }"
+                        >
+                          <path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                        </svg>
+                      </div>
+
+                      <div v-show="showAudioOptions" class="quality-grid">
+                        <button
+                          v-for="quality in audioQualities"
+                          :key="quality.value"
+                          @click="selectedAudioQuality = quality.value"
+                          :class="['quality-btn', { active: selectedAudioQuality === quality.value }]"
+                        >
+                          <div class="quality-info">
+                            <span class="quality-label">{{ quality.label }}</span>
+                            <span class="quality-desc">{{ quality.description }}</span>
+                          </div>
+                          <svg v-if="selectedAudioQuality === quality.value" viewBox="0 0 24 24" class="check-icon">
+                            <path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                          </svg>
+                        </button>
+                      </div>
+
+<!--                      <div class="audio-info">-->
+<!--                        <svg viewBox="0 0 24 24" class="info-icon">-->
+<!--                          <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>-->
+<!--                        </svg>-->
+<!--                        <p>Audio files are processed on the server and automatically deleted after download to keep storage clean.</p>-->
+<!--                      </div>-->
+                    </div>
+                  </div>
+                </div>
+
+                <button @click="startDownload" class="btn btn-download">
+                  <svg viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                  </svg>
+                  Download Best Quality
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div
+          class="progress-section"
+          v-show="showProgress"
+        >
+          <div class="card">
+            <h3 class="section-title">Download Progress</h3>
+
+            <div class="progress-container">
+              <div class="progress-bar-wrapper">
+                <div
+                  class="progress-bar"
+                  :style="{ width: progressData.progress || '0%' }"
+                  :class="progressBarClass"
+                >
+                  <span class="progress-text">{{ progressData.progress_text || '0%' }}</span>
+                </div>
+              </div>
+              <div class="progress-info">{{ extraInfo }}</div>
+
+              <!-- Detailed Progress Info -->
+              <div v-if="progressData.status === 'downloading'" class="detailed-progress">
+                <div class="progress-stats">
+                  <div class="stat-item" v-if="progressData.downloaded">
+                    <span class="stat-label">Downloaded:</span>
+                    <span class="stat-value">{{ progressData.downloaded }}</span>
+                  </div>
+                  <div class="stat-item" v-if="progressData.total && progressData.total !== 'Unknown'">
+                    <span class="stat-label">Total Size:</span>
+                    <span class="stat-value">{{ progressData.total }}</span>
+                  </div>
+                  <div class="stat-item" v-if="progressData.speed && progressData.speed !== '...'">
+                    <span class="stat-label">Speed:</span>
+                    <span class="stat-value">{{ progressData.speed }}</span>
+                  </div>
+                  <div class="stat-item" v-if="progressData.eta && progressData.eta !== '...'">
+                    <span class="stat-label">ETA:</span>
+                    <span class="stat-value">{{ progressData.eta }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="downloadError" class="action-buttons">
+              <button @click="retryDownload" class="btn btn-primary">
+                <svg viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                </svg>
+                Try Again
+              </button>
+              <button @click="reloadWithUrl" class="btn btn-secondary">
+                <svg viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                </svg>
+                Reload & Keep URL
+              </button>
+            </div>
+
+            <div v-if="downloadComplete" class="action-buttons">
+              <button @click="reloadPage" class="btn btn-secondary">
+                <svg viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                </svg>
+                Reload Page
+              </button>
+              <button @click="downloadAnother" class="btn btn-primary">
+                <svg viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                </svg>
+                Download Another Video
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-      <div id="extra-info">{{ extraInfo }}</div>
-      
-      <div v-if="downloadError" class="button-container" style="margin-top: 15px;">
-        <button @click="retryDownload" class="download-button">🔄 Try Again</button>
-        <button @click="reloadWithUrl" class="download-button">🔄 Reload & Keep URL</button>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="footer-links">
+          <a href="#" class="footer-link">Privacy Policy</a>
+          <a href="#" class="footer-link">Terms of Service</a>
+          <a href="#" class="footer-link">Support</a>
+        </div>
+        <div class="copyright">
+          <p>&copy; 2024 <strong>getstube.com</strong> - All rights reserved</p>
+          <p class="disclaimer">For personal use only. Please respect YouTube's terms of service.</p>
+        </div>
       </div>
-      
-      <div v-if="downloadComplete" class="button-container">
-        <button @click="reloadPage" class="download-button">🔄 Reload Page</button>
-        <button @click="downloadAnother" class="download-button">📥 Download Another Video</button>
-      </div>
-    </div>
+    </footer>
   </div>
 </template>
 
@@ -123,7 +372,28 @@ export default {
       extraInfo: '',
       downloadError: false,
       downloadComplete: false,
-      currentDownloadId: null
+      currentDownloadId: null,
+      selectedFormat: 'video',
+      selectedQuality: 'best',
+      selectedAudioQuality: 'high',
+      availableQualities: [
+        { value: 'best', label: 'Best Quality', description: 'Highest available quality' },
+        { value: '1080', label: '1080p HD', description: 'Full HD (1920x1080)' },
+        { value: '720', label: '720p HD', description: 'HD Ready (1280x720)' },
+        { value: '480', label: '480p', description: 'Standard Definition' },
+        { value: '360', label: '360p', description: 'Low Quality (smaller file)' },
+        { value: '240', label: '240p', description: 'Very Low Quality' }
+      ],
+      audioQualities: [
+        { value: 'high', label: '320 kbps', description: 'High Quality MP3' },
+        { value: 'medium', label: '192 kbps', description: 'Medium Quality MP3' },
+        { value: 'low', label: '128 kbps', description: 'Standard Quality MP3' }
+      ],
+      systemInfo: null,
+      ffmpegAvailable: true,
+      showFFmpegGuide: false,
+      showAudioOptions: false,
+      showVideoOptions: false
     }
   },
   computed: {
@@ -154,6 +424,7 @@ export default {
   },
   mounted() {
     this.initializeApp();
+    this.checkSystemInfo();
   },
   methods: {
     initializeApp() {
@@ -183,6 +454,11 @@ export default {
     },
     onUrlInput() {
       // This method is called on input, but the actual logic is in the watcher
+    },
+    clearUrl() {
+      this.url = '';
+      this.resetStates();
+      this.resetProgressState();
     },
     async getVideoInfo() {
       if (!this.url.trim()) {
@@ -285,6 +561,13 @@ export default {
       try {
         const formData = new FormData();
         formData.append("info_id", this.currentInfoId);
+        formData.append("format", this.selectedFormat);
+
+        if (this.selectedFormat === 'video') {
+          formData.append("quality", this.selectedQuality);
+        } else {
+          formData.append("audio_quality", this.selectedAudioQuality);
+        }
 
         const response = await fetch("/start-download", {
           method: "POST",
@@ -319,7 +602,8 @@ export default {
           }
 
           const data = await response.json();
-          console.log('Progress data:', data);
+          console.log(`Progress poll ${attempts}/${maxAttempts}:`, data);
+          console.log(`Status: ${data.status}, Progress: ${data.progress_text}`);
 
           if (data.error) {
             this.showDownloadError(`Download failed: ${data.error}`);
@@ -331,17 +615,19 @@ export default {
 
           if (data.status === "finished" && data.download_ready && data.filename) {
             this.progressData.progress = "100%";
-            this.progressData.progress_text = "Starting Download...";
-            this.extraInfo = "Download will start automatically...";
+            this.progressData.progress_text = "Download Complete";
+            this.extraInfo = "File ready for download...";
 
             // Automatically start the download
             this.downloadFile(downloadId, data.filename);
             return;
           }
 
-          // Continue polling
+          // Continue polling with faster updates during active processing
           if (attempts < maxAttempts) {
-            setTimeout(poll, 1000);
+            const activeStatuses = ['downloading', 'processing', 'starting'];
+            const pollInterval = activeStatuses.includes(data.status) ? 500 : 1000; // 500ms during active processing, 1s otherwise
+            setTimeout(poll, pollInterval);
           } else {
             this.showDownloadError("Timeout: Download took too long. Please try again.");
           }
@@ -357,7 +643,7 @@ export default {
         }
       };
 
-      setTimeout(poll, 1000);
+      setTimeout(poll, 500); // Start polling faster
     },
     updateExtraInfo(data) {
       const status = data.status || "";
@@ -385,8 +671,8 @@ export default {
     downloadFile(downloadId, filename) {
       console.log('Downloading file:', downloadId, filename);
 
-      this.progressData.progress_text = "Download Started";
-      this.extraInfo = `Downloading: ${filename}`;
+      this.progressData.progress_text = "Starting Download...";
+      this.extraInfo = `Preparing: ${filename}`;
 
       // Use the streaming download endpoint for direct browser download
       const link = document.createElement('a');
@@ -401,10 +687,10 @@ export default {
 
       // Show completion message after a short delay
       setTimeout(() => {
-        this.progressData.progress_text = "Download Complete";
-        this.extraInfo = "File downloaded successfully!";
+        this.progressData.progress_text = "Download Started";
+        this.extraInfo = "File download initiated successfully!";
         this.downloadComplete = true;
-      }, 1000);
+      }, 2000);
     },
     retryVideoInfo() {
       this.getVideoInfo();
@@ -462,6 +748,31 @@ export default {
       this.downloadError = false;
       this.downloadComplete = false;
       this.currentDownloadId = null;
+    },
+    getSelectedQualityLabel() {
+      const quality = this.availableQualities.find(q => q.value === this.selectedQuality);
+      return quality ? quality.label : 'Best Quality';
+    },
+    getSelectedAudioQualityLabel() {
+      const quality = this.audioQualities.find(q => q.value === this.selectedAudioQuality);
+      return quality ? quality.label : 'High Quality';
+    },
+    async checkSystemInfo() {
+      try {
+        const response = await fetch('/system-info');
+        if (response.ok) {
+          this.systemInfo = await response.json();
+          this.ffmpegAvailable = this.systemInfo.ffmpeg_available;
+
+          if (!this.ffmpegAvailable) {
+            console.warn('FFmpeg not available - audio downloads will show warning');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check system info:', error);
+        // Assume audio is not available on error
+        this.ffmpegAvailable = false;
+      }
     }
   }
 }
