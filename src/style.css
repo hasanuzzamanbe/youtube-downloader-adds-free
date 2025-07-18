@@ -674,6 +674,62 @@ body {
     transform: rotate(180deg);
 }
 
+/* Demo Section Styles */
+.demo-section {
+    text-align: center;
+    margin: 2rem 0;
+    padding: 2rem 1.5rem;
+    background: linear-gradient(135deg, #cef7ffde, #b1ffb4);
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+.demo-placeholder h3 {
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    margin: 1rem 0 0.5rem 0;
+    font-weight: 600;
+}
+
+.demo-icon {
+    width: 4rem;
+    height: 4rem;
+    color: var(--accent-color);
+    margin-bottom: 0.5rem;
+}
+
+.demo-text {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin: 0 0 1.5rem 0;
+}
+
+.demo-features {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+.feature-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--accent-color);
+    flex-shrink: 0;
+}
+
 /* Progress Section */
 .progress-section {
     margin-bottom: 2rem;
@@ -895,6 +951,33 @@ body {
 
     .quality-collapse-header .quality-title {
         font-size: 0.8rem;
+    }
+
+    .demo-section {
+        margin: 1rem 0;
+        padding: 1.5rem 1rem;
+    }
+
+    .demo-placeholder h3 {
+        font-size: 1.25rem;
+    }
+
+    .demo-icon {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    .demo-text {
+        font-size: 0.8rem;
+    }
+
+    .demo-features {
+        max-width: 100%;
+    }
+
+    .feature-item {
+        font-size: 0.8rem;
+        padding: 0.4rem;
     }
 
     .error-actions,

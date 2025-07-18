@@ -55,6 +55,37 @@
               Supports YouTube videos and shorts. Videos stream directly, audio files are auto-cleaned after download.
             </div>
           </form>
+
+          <!-- Demo section when no input -->
+          <div v-if="!url.trim()" class="demo-section">
+            <div class="demo-placeholder">
+              <p class="demo-text">Paste any YouTube URL above or replace youTube link with getsTube anywhere!</p>
+
+              <!--                gif add/-->
+              <img style="border-radius: 0.5rem;" src="../public/getstube-demo.gif" alt="Demo GIF" class="demo-gif">
+
+              <div class="demo-features">
+                <!--                  <div class="feature-item">-->
+                <!--                    <svg viewBox="0 0 24 24" class="feature-icon">-->
+                <!--                      <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>-->
+                <!--                    </svg>-->
+                <!--                    <span>Multiple video qualities</span>-->
+                <!--                  </div>-->
+                <!--                  <div class="feature-item">-->
+                <!--                    <svg viewBox="0 0 24 24" class="feature-icon">-->
+                <!--                      <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>-->
+                <!--                    </svg>-->
+                <!--                    <span>MP3 audio extraction</span>-->
+                <!--                  </div>-->
+                <!--                  <div class="feature-item">-->
+                <!--                    <svg viewBox="0 0 24 24" class="feature-icon">-->
+                <!--                      <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>-->
+                <!--                    </svg>-->
+                <!--                    <span>Direct streaming to browser</span>-->
+                <!--                  </div>-->
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Video Info Section -->
